@@ -1,0 +1,15 @@
+language: rust
+
+install:
+  - rustup target add wasm32-unknown-unknown
+  - npm install
+
+script:
+  - cd lib && cargo build --release --target=wasm32-unknown-unknown && cd ../ && cp lib/target/wasm32-unknown-unknown/release/reversi.wasm public && npm run build
+
+after_success: |
+  if [ -n "$GITHUB_API_KEY" ]; then
+  git remote set-url origin https://umedaikiti:$GITHUB_API_KEY@github.com/umedaikiti/reversi-ai-web.git
+  npm run deploy
+  fi
+

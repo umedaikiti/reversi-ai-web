@@ -1,0 +1,51 @@
+.App {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+.col {
+	height: 80px;
+	width: 640px;
+	display: table;
+}
+.row {
+	height: 80px;
+	width: 80px;
+	display: table-cell;
+	box-sizing: border-box;
+	border: 1px solid black;
+	-webkit-transition: background-color 0.5s ease;
+	-moz-transition: background-color 0.5s ease;
+	-o-transition: background-color 0.5s ease;
+	background-color: green;
+}
+.row:hover {
+	background-color: lime;
+}
+.player {
+	background-color: black;
+}
+.opponent {
+	background-color: white;
+}
+.hidden {
+	display: none;
+}
+.row:hover > .valid-move {
+	display: block;
+	background-color: rgba(0, 0, 0, 0.7);
+}
+.last-move {
+	outline: solid 2px red;
+}
+.disk {
+	width: 60px;
+	height: 60px;
+	-webkit-border-radius: 50%;
+	-moz-border-radius: 50%;
+	border-radius: 50%;
+	margin: 9px;
+	box-sizing: border-box;
+	border: 1px solid black;
+}

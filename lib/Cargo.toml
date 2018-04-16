@@ -1,0 +1,12 @@
+[package]
+name = "reversi_lib"
+version = "0.1.0"
+authors = ["umedaikiti <umedaikiti@gmail.com>"]
+
+[lib]
+name = "reversi"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+rand="0.5.0-pre.0"
