@@ -1,16 +1,15 @@
-var board = Array(8);
-for(let i=0;i<8;i++) board[i] = Array(8).fill(0);
-var valid_move = Array(8);
-for(let i=0;i<8;i++) valid_move[i] = Array(8).fill(false);
+var state = {last: null, turn: 1, board: Array(8), valid_move: Array(8)};
+for(let i=0;i<8;i++) state.board[i] = Array(8).fill(0);
+for(let i=0;i<8;i++) state.valid_move[i] = Array(8).fill(false);
 var exports;
 function update_board() {
 	for(var i=0;i<8;i++) for(var j=0;j<8;j++) {
-		board[i][j] = exports.get_board(i, j);
+		state.board[i][j] = exports.get_board(i, j);
 	}
 }
-function update_valid_move(turn) {
+function update_valid_move() {
 	for(var i=0;i<8;i++) for(var j=0;j<8;j++) {
-		valid_move[i][j] = exports.is_valid_move(i, j, turn);
+		state.valid_move[i][j] = exports.is_valid_move(i, j, state.turn);
 	}
 }
 function next(turn) {
@@ -22,6 +21,25 @@ function next(turn) {
 		return 0;
 	}
 }
+function reset() {
+	state.last = null;
+	state.turn = 1;
+	exports.reset();
+	update_board();
+	update_valid_move();
+}
+function set_disk(x, y) {
+	if(exports.set_disk(x, y, state.turn)) {
+		console.log(`${state.turn === 1 ? "You" : "AI"} placed a disk at (${x}, ${y}).`);
+		state.last = {x: x, y: y};
+		state.turn = next(-state.turn);
+		update_board();
+		update_valid_move();
+		return true;
+	} else {
+		return false;
+	}
+}
 fetch('reversi.wasm').then(response =>
   response.arrayBuffer()
 ).then(bytes =>
@@ -30,51 +48,39 @@ fetch('reversi.wasm').then(response =>
 	{
 		console.log('Worker: initialize');
 		exports = result.instance.exports;
-		var last = null;
 		onmessage = function(e) {
-			var turn = 1;
 			if(e.data.type === 'reset') {
 				console.log('reset');
-				exports.reset();
-				update_board();
-				update_valid_move(turn);
-				last = null;
-				postMessage({turn: turn, board: board, last: last, valid_move: valid_move});
+				reset();
+				postMessage(state);
 			} else if(e.data.type === 'move') {
 				console.log('move');
-				if(exports.set_disk(e.data.x, e.data.y, turn)) {
-					update_board();
-					turn = next(-1);
-					update_valid_move(turn);
-					last = {x: e.data.x, y: e.data.y};
-					console.log(`You placed a disk at (${last.x}, ${last.y}).`);
-					postMessage({turn: turn, board: board, last: last, valid_move: valid_move});
-					while(turn === -1) {
+				if(set_disk(e.data.x, e.data.y)) {
+					postMessage(state);
+					while(state.turn === -1) {
 						var r = exports.ai_think(-1);
 						if(r >= 0) {
 							var x = r >> 3;
 							var y = r & 0x7;
-							exports.set_disk(x, y, turn);
-							update_board();
-							turn = next(1);
-							update_valid_move(turn);
-							last = {x: x, y: y};
-							console.log(`AI placed a disk at (${last.x}, ${last.y}).`);
-							postMessage({turn: turn, board: board, last: last, valid_move: valid_move});
+							if(!set_disk(x, y)) {
+								state.turn = 0;
+								console.log('BUG');
+								throw 'BUG';
+							}
+							postMessage(state);
 						} else {
-							turn = 0;
+							state.turn = 0;
 							console.log('BUG');
+							throw 'BUG';
 						}
 					}
 				} else {
 					console.log('invalid move');
-					postMessage({turn: turn, board: board, last: last, valid_move: valid_move});
+					postMessage(state); // activate onclick
 				}
 			}
 		};
-		exports.reset();
-		update_board();
-		update_valid_move(1);
-		postMessage({turn: 1, board: board, last: null, valid_move: valid_move});
+		reset();
+		postMessage(state);
 	}
 );
