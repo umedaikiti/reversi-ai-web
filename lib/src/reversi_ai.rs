@@ -1,4 +1,5 @@
 //extern crate rand;
+#![allow(dead_code)]
 
 pub mod reversi {
 #[derive(Debug, PartialEq, Clone, Copy)]
