@@ -28,6 +28,17 @@ function info_string(data) {
 	return info;
 }
 
+function random_player() {
+	let ary = document.getElementsByClassName("valid-move");
+	ary[Math.floor(Math.random() * ary.length)].dispatchEvent(new MouseEvent('click', {
+		bubbles: true,
+		cancelable: true,
+		view: window
+	}));
+}
+
+var debug = window.location.search === '?debug';
+
 if(window.Worker) {
 	var worker = new Worker("worker.js");
 	//	worker.postMessage({type: 'reset'});
@@ -55,7 +66,14 @@ if(window.Worker) {
 		console.log('update');
 		var info = info_string(e.data);
 		ReactDOM.render(<App handleClick={handleClick} reset={reset} data={e.data} info={info} />, document.getElementById('root'));
-		if(e.data.turn === 1) clickValid = true;
+		if(e.data.turn === 1) {
+			clickValid = true;
+			if(debug) random_player();
+		}
+		if(e.data.turn === 0) {
+			console.log(info);
+			if(debug) setTimeout(() => worker.postMessage({type: 'reset'}), 3000);
+		}
 	}
 	registerServiceWorker();
 }
