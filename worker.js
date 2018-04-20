@@ -40,10 +40,16 @@ function set_disk(x, y) {
 		return false;
 	}
 }
+
+const imports = {
+	env: {
+		rand: Math.random,
+	}
+};
 fetch('reversi.wasm').then(response =>
   response.arrayBuffer()
 ).then(bytes =>
-  WebAssembly.instantiate(bytes, {})
+  WebAssembly.instantiate(bytes, imports)
 ).then(result =>
 	{
 		console.log('Worker: initialize');
