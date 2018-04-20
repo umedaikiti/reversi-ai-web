@@ -1,6 +1,18 @@
 //extern crate rand;
 #![allow(dead_code)]
 
+extern "C" {
+    fn rand() -> f64;
+}
+
+fn shuffle<T>(a : &mut [T]){
+    for i in (0..a.len()).rev() {
+        let r = unsafe { rand() };
+        let j = (r*i as f64).floor() as usize;
+        a.swap(i, j);
+    }
+}
+
 pub mod reversi {
 #[derive(Debug, PartialEq, Clone, Copy)]
     pub enum Color {O, X}
@@ -171,8 +183,7 @@ pub mod reversi {
     }
     pub mod reversi_ai {
         use std::cmp::Ordering;
-//        use rand::Rng;
-//        use rand::thread_rng;
+        use reversi_ai::shuffle;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         struct MvVal(super::Move, i32);
         const INF : i32 = 10000;
@@ -247,9 +258,8 @@ pub mod reversi {
         }
         fn eval<T : super::ReversiBoard + Clone, F>(b : &T, c : super::Color, depth : u32, resource : u32, eval_base : &F) -> MvVal
          where F : Fn(&T, super::Color) -> i32 {
-//            let ms = b.valid_moves(c);
             let mut ms = b.valid_moves(c);
-//            thread_rng().shuffle(&mut ms);
+            shuffle(&mut ms);
             let ms = if ms.is_empty() {vec![super::Move::Pass]} else {ms};
             let opc = c.opposite_color();
             let v : Vec<_> = if depth == 0 || resource == 0 {
@@ -265,6 +275,7 @@ pub mod reversi {
 //            let ms = b.valid_moves(c);
             let mut ms = b.valid_moves(c);
 //            thread_rng().shuffle(&mut ms);
+            shuffle(&mut ms);
             let ms = if ms.is_empty() {vec![super::Move::Pass]} else {ms};
             let opc = c.opposite_color();
             let ms_len = ms.len() as u32;
