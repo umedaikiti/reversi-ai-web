@@ -6,9 +6,9 @@ extern "C" {
 }
 
 fn shuffle<T>(a : &mut [T]){
-    for i in (0..a.len()).rev() {
+    for i in (1..a.len()).rev() {
         let r = unsafe { rand() };
-        let j = (r*i as f64).floor() as usize;
+        let j = (r*(i+1) as f64).floor() as usize;
         a.swap(i, j);
     }
 }
