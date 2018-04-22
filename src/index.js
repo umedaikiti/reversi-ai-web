@@ -55,6 +55,9 @@ if(window.Worker) {
 			}
 		};
 	};
+	var q = [];
+	var q_wait = false;
+	var timer = null;
 	const reset = e => {
 		e.preventDefault();
 		if(window.confirm('Are you sure you want to start a new game?')) {
@@ -62,18 +65,43 @@ if(window.Worker) {
 		}
 	};
 
-	worker.onmessage = e => {
+	function update(data) {
 		console.log('update');
-		var info = info_string(e.data);
-		ReactDOM.render(<App handleClick={handleClick} reset={reset} data={e.data} info={info} />, document.getElementById('root'));
-		if(e.data.turn === 1) {
-			clickValid = true;
-			if(debug) random_player();
+		var info = info_string(data);
+		ReactDOM.render(<App handleClick={handleClick} reset={reset} data={data} info={info} />, document.getElementById('root'), function() {
+			if(data.turn === 1) {
+				clickValid = true;
+				if(debug) random_player();
+			}
+			if(data.turn === 0) {
+				console.log(info);
+				if(debug) {
+					setTimeout(() => worker.postMessage({type: 'reset'}), 3000);
+				}
+			}
+		});
+		q_wait = true;
+		timer = setTimeout(() => {
+			timer = null;
+			if(q.length > 0) {
+				let data = q.shift();
+				update(data);
+			} else {
+				q_wait = false;
+			}
+		}, 500);
+	}
+	worker.onmessage = e => {
+		if(e.data.last === null) {
+			q_wait = false;
+			q = [];
+			if(timer !== null) {
+				clearTimeout(timer);
+				timer = null;
+			}
 		}
-		if(e.data.turn === 0) {
-			console.log(info);
-			if(debug) setTimeout(() => worker.postMessage({type: 'reset'}), 3000);
-		}
+		if(q_wait) q.push(e.data);
+		else update(e.data);
 	}
 	registerServiceWorker();
 }
