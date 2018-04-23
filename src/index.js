@@ -43,11 +43,12 @@ if(window.Worker) {
 	var worker = new Worker("worker.js");
 	//	worker.postMessage({type: 'reset'});
 	var clickValid = false;
+	var resetting = false;
 	const handleClick = (i, j) => {
 		return e => {
 			e.preventDefault();
 			console.log(`clicked: (${i}, ${j})`);
-			if(clickValid) {
+			if(clickValid && !resetting) {
 				worker.postMessage({type: 'move', x: i, y: j});
 				clickValid = false;
 			} else {
@@ -56,17 +57,21 @@ if(window.Worker) {
 		};
 	};
 	var q = [];
-	var q_wait = false;
 	var timer = null;
 	const reset = e => {
 		e.preventDefault();
 		if(window.confirm('Are you sure you want to start a new game?')) {
 			worker.postMessage({type: 'reset'});
+			resetting = true;
 		}
 	};
 
 	function update(data) {
 		console.log('update');
+		if(resetting) {
+			console.log('resetting');
+			return;
+		}
 		var info = info_string(data);
 		ReactDOM.render(<App handleClick={handleClick} reset={reset} data={data} info={info} />, document.getElementById('root'), function() {
 			if(data.turn === 1) {
@@ -76,32 +81,32 @@ if(window.Worker) {
 			if(data.turn === 0) {
 				console.log(info);
 				if(debug) {
-					setTimeout(() => worker.postMessage({type: 'reset'}), 3000);
+					setTimeout(() => {
+						worker.postMessage({type: 'reset'});
+						resetting = true;
+					}, 3000);
 				}
 			}
 		});
-		q_wait = true;
 		timer = setTimeout(() => {
 			timer = null;
 			if(q.length > 0) {
 				let data = q.shift();
 				update(data);
-			} else {
-				q_wait = false;
 			}
 		}, 500);
 	}
 	worker.onmessage = e => {
 		if(e.data.last === null) {
-			q_wait = false;
 			q = [];
+			resetting = false;
 			if(timer !== null) {
 				clearTimeout(timer);
 				timer = null;
 			}
 		}
-		if(q_wait) q.push(e.data);
-		else update(e.data);
+		if(timer === null) update(e.data);
+		else q.push(e.data);
 	}
 	registerServiceWorker();
 }
