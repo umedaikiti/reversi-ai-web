@@ -47,9 +47,9 @@ const imports = {
 	}
 };
 fetch('reversi.wasm').then(response =>
-  response.arrayBuffer()
+	response.arrayBuffer()
 ).then(bytes =>
-  WebAssembly.instantiate(bytes, imports)
+	WebAssembly.instantiate(bytes, imports)
 ).then(result =>
 	{
 		console.log('Worker: initialize');
